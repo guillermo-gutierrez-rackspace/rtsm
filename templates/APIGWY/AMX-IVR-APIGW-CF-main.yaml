@@ -1,0 +1,80 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "
+  Root cloudformation stack which create:
+  - 1 HTTP API Gateway
+  - 1 VPC Link (Private Link)
+  "
+
+# ==========================================================================
+Parameters:
+  AppPrefix:
+    Description: "Prefix to be used to name all resources"
+    Type: String
+    Default: amx-ivr
+    AllowedPattern: ^[0-9a-z]+([0-9a-z-]*[0-9a-z])*$
+    MinLength: 3
+
+  ApiGatewayHttpsServerName:
+    Description: "Server Name that API Gateway uses to verify the hostname on the integration's certificate."
+    Type: String
+    Default: cloudup.mx
+
+  ACMCertificateARN:
+    Type: String
+
+  ApiGatewayCustomDomainName:
+    Type: String
+    Default: dyn-ivr-ac.cloudup.mx
+    AllowedPattern: ^[0-9a-z-\.]+$
+
+  DisableExecuteApiEndpoint:
+    Type: String
+    Default: true
+
+  # NOTA: Para poder configurar este valor, primero se debe crear el EKS
+  EksLoadBalancerListenerARN:
+    Type: String
+
+  # TAGS Parameters
+  Environment:
+    Description: "Specify the type of environment with wich to tag your infraestructure resources that support tags."
+    Type: String
+    AllowedValues:
+      - DES
+      - Q
+      - PD
+    Default: DES
+    ConstraintDescription: Specify either DES, Qa or PD.
+
+# -----------------------------------------------------------------------------
+Mappings:
+  EnvironmentTranslate:
+    DES:
+      Environment: des
+    Q:
+      Environment: q
+    PD:
+      Environment: pd
+
+# ==========================================================================
+Resources:
+  ApiGatewayStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: "AMX-IVR-APIGW-CF.yaml"
+      TimeoutInMinutes: 10
+      Parameters:
+        AppPrefix: !Ref AppPrefix
+        ApiGatewayHttpsServerName: !Ref ApiGatewayHttpsServerName
+        ACMCertificateARN: !Ref ACMCertificateARN
+        ApiGatewayCustomDomainName: !Ref ApiGatewayCustomDomainName
+        DisableExecuteApiEndpoint: !Ref DisableExecuteApiEndpoint
+        ApiGatewayLogGroupArn: !ImportValue ivr-apigw-logs-arn
+        EksLoadBalancerListenerARN: !Ref EksLoadBalancerListenerARN
+        APPSecurityGroupID: !ImportValue IVR-APPSecurityGroupID
+        PrivateSubnetsIds: !Join
+          - ","
+          - - !ImportValue IVR-Subnet01ID
+            - !ImportValue IVR-Subnet02ID
+        EnvironmentLower:
+          !FindInMap [EnvironmentTranslate, !Ref Environment, Environment]

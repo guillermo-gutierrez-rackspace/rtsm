@@ -1,0 +1,62 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "
+  Cloudformation stack which create:
+    - 1 VPC Flow Logs
+    - 1 Cloudwatch LogGroup
+    - 1 IAM ROL for the LogGroup
+  "
+
+# ==========================================================================
+Parameters:
+  NamePrefix:
+    Type: String
+    Description: Name to be used in the resources
+    Default: amx-ppl-cc
+
+  TrafficType:
+    Description: The type of traffic to log.
+    Type: String
+    Default: ALL
+    AllowedValues:
+      - ACCEPT
+      - REJECT
+      - ALL
+
+  VPCID:
+    Type: String
+
+  FLogGroup:
+    Type: String
+
+  FLogRolArn:
+    Type: String
+
+  EnvironmentLower:
+    Type: String
+
+# ==========================================================================
+Resources:
+  FlowLog:
+    Type: 'AWS::EC2::FlowLog'
+    Properties:
+      LogGroupName: !Ref FLogGroup
+      DeliverLogsPermissionArn: !Ref FLogRolArn
+      ResourceId: !Ref VPCID
+      ResourceType: VPC
+      TrafficType: !Ref TrafficType
+
+      Tags:
+        - Key: Name
+          Value: !Sub "${NamePrefix}-${EnvironmentLower}-vpce-flogs"
+        - Key: Nombre
+          Value: !Sub "${NamePrefix}-${EnvironmentLower}-vpce-flogs"
+        - Key: ApplicationRole
+          Value: Web
+
+#==========================================================================
+Outputs:
+  FlowLogName:
+    Description: The name of the FlowLog resource.
+    Value: !Ref FlowLog
+    Export:
+      Name: ppl-cc-vpce-flogs-name

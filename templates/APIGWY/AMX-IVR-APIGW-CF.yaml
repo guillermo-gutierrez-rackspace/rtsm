@@ -1,0 +1,175 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "
+  Cloudformation stack which create:
+    - 1 HTTP API Gateway
+    - 1 VPC Link (Private Link)
+  "
+
+#==========================================================================
+Parameters:
+  AppPrefix:
+    Description: "Prefix to be used for API Gateway Name Resource"
+    Type: String
+    Default: amx-ivr
+    AllowedPattern: ^[0-9a-zA-Z-]+$
+    ConstraintDescription: "Api Gateway name can include numbers, lowercase letters, uppercase letters, and hyphens (-)."
+    MinLength: 3
+
+  ApiGatewayHttpsServerName:
+    Description: "Server Name that API Gateway uses to verify the hostname on the integration's certificate."
+    Type: String
+    Default: cloudup.mx
+
+  ACMCertificateARN:
+    Type: String
+
+  ApiGatewayCustomDomainName:
+    Type: String
+    Default: dyn-ivr-ac.cloudup.mx
+    AllowedPattern: ^[0-9a-z-\.]+$
+
+  DisableExecuteApiEndpoint:
+    Type: String
+    Default: true
+
+  EksLoadBalancerListenerARN:
+    Type: String
+
+  ApiGatewayLogGroupArn:
+    Type: String
+  APPSecurityGroupID:
+    Type: CommaDelimitedList
+  PrivateSubnetsIds:
+    Type: CommaDelimitedList
+
+  EnvironmentLower:
+    Type: String
+
+#==========================================================================
+Conditions:
+  IsEksALBListenerARN: !Not
+    - !Equals
+      - !Ref EksLoadBalancerListenerARN
+      - ""
+  IsACMCertificateARN: !Not
+    - !Equals
+      - !Ref ACMCertificateARN
+      - ""
+
+#==========================================================================
+Resources:
+  ApiGateway:
+    Type: AWS::ApiGatewayV2::Api
+    Properties:
+      Name: !Sub "${AppPrefix}-${EnvironmentLower}-apigw"
+      Description: "Define the API Gateway for IVR"
+      ProtocolType: HTTP
+      DisableExecuteApiEndpoint: !Ref DisableExecuteApiEndpoint
+      Tags:
+        Name: !Sub "${AppPrefix}-${EnvironmentLower}-apigw"
+        Nombre: !Sub "${AppPrefix}-${EnvironmentLower}-apigw"
+        ApplicationRole: API
+
+  APIRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Condition: IsEksALBListenerARN
+    Properties:
+      ApiId: !Ref ApiGateway
+      RouteKey: 'ANY /{proxy+}'
+      Target: !Join
+        - /
+        - - integrations
+          - !Ref APIIntegration
+
+  APIIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Condition: IsEksALBListenerARN
+    Properties:
+      ApiId: !Ref ApiGateway
+      Description: Private ALB Integration
+      IntegrationType: HTTP_PROXY
+      IntegrationMethod: ANY
+      ConnectionType: VPC_LINK
+      ConnectionId: !Ref ApiGatewayVPCLink
+      IntegrationUri: !Ref EksLoadBalancerListenerARN
+      PayloadFormatVersion: '1.0'
+      TlsConfig:
+        ServerNameToVerify: !Ref ApiGatewayHttpsServerName
+
+  ApiGatewayVPCLink:
+    Type: AWS::ApiGatewayV2::VpcLink
+    Properties:
+      Name: !Sub "${AppPrefix}-${EnvironmentLower}-apigw-vpc-link"
+      SubnetIds: !Ref PrivateSubnetsIds
+      SecurityGroupIds: !Ref APPSecurityGroupID
+
+      Tags:
+        Name: !Sub "${AppPrefix}-${EnvironmentLower}-apigw-vpc-link"
+        Nombre: !Sub "${AppPrefix}-${EnvironmentLower}-apigw-vpc-link"
+        ApplicationRole: API
+
+  APIStage:
+    Type: AWS::ApiGatewayV2::Stage
+    Properties:
+      StageName: '$default'
+      AutoDeploy: true
+      ApiId: !Ref ApiGateway
+      AccessLogSettings:
+        DestinationArn: !Ref ApiGatewayLogGroupArn
+        Format: '{ "requestId":"$context.requestId", "ip": "$context.identity.sourceIp", "requestTime":"$context.requestTime", "httpMethod":"$context.httpMethod","routeKey":"$context.routeKey", "status":"$context.status","protocol":"$context.protocol", "responseLength":"$context.responseLength" }'
+
+      Tags:
+        Name: !Sub "${AppPrefix}-${EnvironmentLower}-apigw-stg"
+        Nombre: !Sub "${AppPrefix}-${EnvironmentLower}-apigw-stg"
+        ApplicationRole: API
+
+  APICustomDomain:
+    Type: AWS::ApiGatewayV2::DomainName
+    Condition: IsACMCertificateARN
+    Properties:
+      DomainName: !Ref ApiGatewayCustomDomainName
+      DomainNameConfigurations:
+        - CertificateArn: !Ref ACMCertificateARN
+          CertificateName: !Sub "${AppPrefix}-${EnvironmentLower}-apigw-crt"
+          EndpointType: REGIONAL
+          SecurityPolicy: TLS_1_2
+
+      Tags:
+        Name: !Sub "${AppPrefix}-${EnvironmentLower}-apigw-custom-domain"
+        Nombre: !Sub "${AppPrefix}-${EnvironmentLower}-apigw-custom-domain"
+        ApplicationRole: API
+
+  APIApiMapping:
+    Type: AWS::ApiGatewayV2::ApiMapping
+    Condition: IsACMCertificateARN
+    Properties:
+      ApiId: !Ref ApiGateway
+      DomainName: !Ref APICustomDomain
+      Stage: !Ref APIStage
+
+#==========================================================================
+Outputs:
+  ApiGatewayID:
+    Description: "HTTP API ID"
+    Value: !Ref ApiGateway
+    Export:
+      Name: ivr-apigw-id
+
+  ApiEndpoint:
+    Description: "The default endpoint for an API"
+    Value: !Sub "${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com"
+    Export:
+      Name: ivr-apigw-endpoint
+
+  APICustomDomainName:
+    Description: "The custom domain name for this API"
+    Condition: IsACMCertificateARN
+    Value: !Ref APICustomDomain
+    Export:
+      Name: ivr-apigw-custom-domain
+
+  ApiGatewayVPCLinkID:
+    Description: "VPC Link ID"
+    Value: !Ref ApiGatewayVPCLink
+    Export:
+      Name: ivr-vpc-link-id

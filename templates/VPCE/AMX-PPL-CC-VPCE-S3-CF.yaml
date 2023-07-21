@@ -1,0 +1,216 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "
+  Cloudformation stack which create:
+    - 1 S3 Endpoint Gateway
+    - 1 S3 Endpoint Interface
+    - 1 Ec2 Endpoint Interface
+    - 1 AutoScaling Endpoint Interface
+    - 1 Logs Endpoint Interface
+    - 1 SSM Enpoint (ssm,ssmmessages,ec2messages)
+    - 1 Security Group for SSM Endpoint
+    - 1 Security Group for S3 Endpoint
+  "
+
+# ==========================================================================
+Parameters:
+  VPCID:
+    Type: String
+  VPCCIDR:
+    Type: String
+
+  PrivateRouteTablesIds:
+    Type: CommaDelimitedList
+  PrivateSubnetsIds:
+    Type: CommaDelimitedList
+
+  Environment:
+    Type: String
+
+# ==========================================================================
+Resources:
+  S3GatewayEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      VpcEndpointType: Gateway
+      ServiceName: !Sub "com.amazonaws.${AWS::Region}.s3"
+      VpcId: !Ref VPCID
+      RouteTableIds: !Ref PrivateRouteTablesIds
+
+  S3InterfaceEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+        VpcId: !Ref VPCID
+        VpcEndpointType: Interface
+        SecurityGroupIds:
+          - !Ref S3EndpointSecurityGroup
+        ServiceName: !Sub "com.amazonaws.${AWS::Region}.s3"
+        SubnetIds: !Ref PrivateSubnetsIds
+
+  S3EndpointSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      VpcId: !Ref VPCID
+      GroupDescription: Security Group for the S3 Endpoint
+      SecurityGroupIngress:
+        - Description: Ingress rule for the S3 Endpoint SG
+          IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: !Ref VPCCIDR
+
+      Tags:
+        - Key: Name
+          Value: !Sub "AMX-PPL-CC-${Environment}-SG-VPCE-S3"
+        - Key: Nombre
+          Value: !Sub "AMX-PPL-CC-${Environment}-SG-VPCE-S3"
+        - Key: ApplicationRole
+          Value: Web
+
+  SSMEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      VpcEndpointType: Interface
+      PrivateDnsEnabled: true
+      SecurityGroupIds:
+        - !Ref SSMEndpointSecurityGroup
+      ServiceName: !Sub "com.amazonaws.${AWS::Region}.ssm"
+      VpcId: !Ref VPCID
+      SubnetIds: !Ref PrivateSubnetsIds
+
+  SSMMessagesEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      VpcEndpointType: Interface
+      PrivateDnsEnabled: true
+      SecurityGroupIds:
+        - !Ref SSMEndpointSecurityGroup
+      ServiceName: !Sub "com.amazonaws.${AWS::Region}.ssmmessages"
+      VpcId: !Ref VPCID
+      SubnetIds: !Ref PrivateSubnetsIds
+
+  EC2MessagesEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      VpcEndpointType: Interface
+      PrivateDnsEnabled: true
+      SecurityGroupIds:
+        - !Ref SSMEndpointSecurityGroup
+      ServiceName: !Sub "com.amazonaws.${AWS::Region}.ec2messages"
+      VpcId: !Ref VPCID
+      SubnetIds: !Ref PrivateSubnetsIds
+
+  # Endpoints Private Mode EKS
+  Ec2Endpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      VpcEndpointType: Interface
+      PrivateDnsEnabled: true
+      SecurityGroupIds:
+        - !Ref SSMEndpointSecurityGroup
+      ServiceName: !Sub "com.amazonaws.${AWS::Region}.ec2"
+      VpcId: !Ref VPCID
+      SubnetIds: !Ref PrivateSubnetsIds
+
+  AutoEscalingEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      VpcEndpointType: Interface
+      PrivateDnsEnabled: true
+      SecurityGroupIds:
+        - !Ref SSMEndpointSecurityGroup
+      ServiceName: !Sub "com.amazonaws.${AWS::Region}.autoscaling"
+      VpcId: !Ref VPCID
+      SubnetIds: !Ref PrivateSubnetsIds
+
+  LogsEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      VpcEndpointType: Interface
+      PrivateDnsEnabled: true
+      SecurityGroupIds:
+        - !Ref SSMEndpointSecurityGroup
+      ServiceName: !Sub "com.amazonaws.${AWS::Region}.logs"
+      VpcId: !Ref VPCID
+      SubnetIds: !Ref PrivateSubnetsIds
+
+  SSMEndpointSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      VpcId: !Ref VPCID
+      GroupDescription: Security Group for the SSM Endpoints
+      SecurityGroupIngress:
+        - Description: Ingress rule for the SSM Endpoints SG
+          IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: !Ref VPCCIDR
+
+      Tags:
+        - Key: Name
+          Value: !Sub "AMX-PPL-CC-${Environment}-SG-VPCE-SSM"
+        - Key: Nombre
+          Value: !Sub "AMX-PPL-CC-${Environment}-SG-VPCE-SSM"
+        - Key: ApplicationRole
+          Value: Web
+
+#==========================================================================
+Outputs:
+  SSMEndpointSecurityGroupId:
+    Description: The ID of the SSM Endpoint Security Group
+    Value: !Ref SSMEndpointSecurityGroup
+    Export:
+      Name: ppl-cc-vpce-sg-ssm-id
+
+  S3EndpointSecurityGroupId:
+    Description: The ID of the S3 Endpoint Security Group
+    Value: !Ref S3EndpointSecurityGroup
+    Export:
+      Name: ppl-cc-vpce-sg-s3-id
+
+  S3GatewayEndpointId:
+    Description: The ID of the VPC endpoint (Gateway)
+    Value: !Ref S3GatewayEndpoint
+    Export:
+      Name: ppl-cc-vpce-gw-s3-id
+
+  S3InterfaceEndpointId:
+    Description: The ID of the VPC endpoint (Interface)
+    Value: !Ref S3InterfaceEndpoint
+    Export:
+      Name: ppl-cc-vpce-if-s3-id
+
+  SSMEndpointId:
+    Description: The ID of the VPC endpoint (Interface)
+    Value: !Ref SSMEndpoint
+    Export:
+      Name: ppl-cc-vpce-if-ssm-id
+
+  SSMMessagesEndpointId:
+    Description: The ID of the VPC endpoint (Interface)
+    Value: !Ref SSMMessagesEndpoint
+    Export:
+      Name: ppl-cc-vpce-if-ssm-msg-id
+
+  EC2MessagesEndpointId:
+    Description: The ID of the VPC endpoint (Interface)
+    Value: !Ref EC2MessagesEndpoint
+    Export:
+      Name: ppl-cc-vpce-if-ec2-msg-id
+
+  Ec2EndpointId:
+    Description: The ID of the VPC endpoint (Interface)
+    Value: !Ref Ec2Endpoint
+    Export:
+      Name: ppl-cc-vpce-if-ec2-id
+
+  AutoEscalingEndpointId:
+    Description: The ID of the VPC endpoint (Interface)
+    Value: !Ref AutoEscalingEndpoint
+    Export:
+      Name: ppl-cc-vpce-if-auto-scaling-id
+
+  LogsEndpointId:
+    Description: The ID of the VPC endpoint (Interface)
+    Value: !Ref LogsEndpoint
+    Export:
+      Name: ppl-cc-vpce-if-logs-id

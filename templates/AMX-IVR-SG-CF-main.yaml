@@ -1,0 +1,198 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "Cloudformation Stack which create:
+  - 3 SecurityGroups (1Pub-2Priv)
+  "
+
+# ==========================================================================
+#Parametros para los SecurityGroups y la VPC (outputs)
+Parameters:
+  VPCPrefixName:
+    Description: Add the VPC Name
+    Type: String
+    Default: AMX-IVR
+
+  Environment:
+    Type: String
+
+  VPCid:
+    Type: String
+    Default: ""
+
+  CidrIp:
+    Type: String
+    Default: ""
+
+  VPCCidrBlock:
+    Type: String
+    Default: ""
+
+  Subnet01:
+    Type: String
+    Default: ""
+
+  Subnet02:
+    Type: String
+    Default: ""
+
+  Subnet03:
+    Type: String
+    Default: ""
+
+  Subnet04:
+    Type: String
+    Default: ""
+
+  Subnet05:
+    Type: String
+    Default: ""
+
+  Subnet06:
+    Type: String
+    Default: ""
+
+  PublicRouteTable:
+    Type: String
+    Default: ""
+
+  PrivateRouteTable:
+    Type: String
+    Default: ""
+
+  Private2RouteTable:
+    Type: String
+    Default: ""
+
+  #-----------------------------------------------------------------------------
+Resources:
+  APISecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      VpcId: !Ref VPCid
+      GroupDescription: Security Group for resources in the API tier
+      SecurityGroupIngress:
+        - Description: Ingress rule for the API SG
+          IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: !Ref CidrIp
+
+      Tags:
+        - Key: Name
+          Value: !Sub "${VPCPrefixName}-${Environment}-VPC-SG-API"
+        - Key: Nombre
+          Value: !Sub "${VPCPrefixName}-${Environment}-VPC-SG-API"
+        - Key: ApplicationRole
+          Value: API
+
+  APPSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      VpcId: !Ref VPCid
+      GroupDescription: Security Group for resources in the app tier
+      SecurityGroupIngress:
+        - Description: Ingress rule for the app SG
+          IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: !Ref CidrIp
+
+      Tags:
+        - Key: Name
+          Value: !Sub "${VPCPrefixName}-${Environment}-VPC-SG-APP"
+        - Key: Nombre
+          Value: !Sub "${VPCPrefixName}-${Environment}-VPC-SG-APP"
+        - Key: ApplicationRole
+          Value: App
+
+  DataSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      VpcId: !Ref VPCid
+      GroupDescription: Security Group for resources in the data tier
+      SecurityGroupIngress:
+        - Description: Ingress rule for the data SG
+          IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: !Ref CidrIp
+
+      Tags:
+        - Key: Name
+          Value: !Sub "${VPCPrefixName}-${Environment}-VPC-SG-DATA"
+        - Key: Nombre
+          Value: !Sub "${VPCPrefixName}-${Environment}-VPC-SG-DATA"
+        - Key: ApplicationRole
+          Value: Data
+
+#==========================================================================
+Outputs:
+  VPCid:
+    Description: The ID of the VPC
+    Value: !Ref VPCid
+    Export:
+      Name: IVR-VPCID
+  VPCCidrBlock:
+    Description: The CIDR Block of the VPC
+    Value: !Ref VPCCidrBlock
+    Export:
+      Name: IVR-VPCCidrBlock
+  APISecurityGroupId:
+    Description: The ID of the API Security Group
+    Value: !Ref APISecurityGroup
+    Export:
+      Name: IVR-APISecurityGroupID
+  APPSecurityGroupId:
+    Description: The ID of the APP Security Group
+    Value: !Ref APPSecurityGroup
+    Export:
+      Name: IVR-APPSecurityGroupID
+  DataSecurityGroupId:
+    Description: The ID of the Data Security Group
+    Value: !Ref DataSecurityGroup
+    Export:
+      Name: IVR-DataSecurityGroupID
+  Subnet01:
+    Description: The ID of the Subnet1
+    Value: !Ref Subnet01
+    Export:
+      Name: IVR-Subnet01ID
+  Subnet02:
+    Description: The ID of the Subnet2
+    Value: !Ref Subnet02
+    Export:
+      Name: IVR-Subnet02ID
+  Subnet03:
+    Description: The ID of the Subnet3
+    Value: !Ref Subnet03
+    Export:
+      Name: IVR-Subnet03ID
+  Subnet04:
+    Description: The ID of the Subnet4
+    Value: !Ref Subnet04
+    Export:
+      Name: IVR-Subnet04ID
+  Subnet05:
+    Description: The ID of the Subnet5
+    Value: !Ref Subnet05
+    Export:
+      Name: IVR-Subnet05ID
+  Subnet06:
+    Description: The ID of the Subnet6
+    Value: !Ref Subnet06
+    Export:
+      Name: IVR-Subnet06ID
+  PublicRouteTable:
+    Description: The ID of the Public Route Table
+    Value: !Ref PublicRouteTable
+    Export:
+      Name: IVR-PublicRouteTableID
+  PrivateRouteTable:
+    Description: The ID of the Private Route Table
+    Value: !Ref PrivateRouteTable
+    Export:
+      Name: IVR-PrivateRouteTableID
+  Private2RouteTable:
+    Description: The ID of the second Private Route Table
+    Value: !Ref Private2RouteTable
+    Export:
+      Name: IVR-Private2RouteTableID

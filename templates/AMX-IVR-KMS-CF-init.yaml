@@ -1,0 +1,341 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "
+  Cloudformation stack wich crate:
+    - 1 General KSM KEY
+    - 1 SM KMS KEY
+    - 1 EKS KMS KEY
+    - 1 S3 KMS KEY
+    - 1 Logs KMS KEY
+    - 1 ECR KMS KEY
+    - 1 DDB KMS KEY
+  "
+
+# ==========================================================================
+Parameters:
+  Environment:
+    Description: "Specify the type of environment with wich to tag your infraestructure resources that support tags."
+    Type: String
+    AllowedValues:
+      - DES
+      - Q
+      - PD
+    Default: DES
+    ConstraintDescription: Specify either DES, Q or PD.
+
+# -----------------------------------------------------------------------------
+# Mappings:
+#   EnvironmentToLower:
+#     DES:
+#       Environment: des
+#     Q:
+#       Environment: q
+#     PD:
+#       Environment: pd
+
+# ==========================================================================
+Resources:
+  ## General
+  kmsCuenta:
+    Type: 'AWS::KMS::Key'
+    Properties:
+      Description: !Sub "KMS General para Ambiente ${Environment}"
+      Enabled: true
+      EnableKeyRotation: true
+      KeySpec: SYMMETRIC_DEFAULT
+      KeyUsage: ENCRYPT_DECRYPT
+      KeyPolicy:
+        Version: 2012-10-17
+        Id: !Sub "AMX-IVR-${Environment}-KMS-CUENTA"
+        Statement:
+          - Sid: Enable IAM User Permissions
+            Effect: Allow
+            Principal:
+              AWS: !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:root
+            Action: 'kms:*'
+            Resource: '*'
+
+      # Los Tags definidos aquí aplican para TODOS los recursos del VPC Stack
+      Tags:
+        - Key: Name
+          Value: !Sub "AMX-IVR-${Environment}-KMS-CUENTA"
+        - Key: Nombre
+          Value: !Sub "AMX-IVR-${Environment}-KMS-CUENTA"
+
+  aliasCuenta:
+    Type: AWS::KMS::Alias
+    Properties:
+      AliasName: !Sub "alias/AMX-IVR-${Environment}-KMS-CUENTA"
+      TargetKeyId: !GetAtt kmsCuenta.Arn
+
+  ## Servicios
+
+  # Servicio SM - Secrets Manager
+  kmsSM:
+    Type: 'AWS::KMS::Key'
+    Properties:
+      Description: !Sub "KMS Para Servicio Secrets Manager para Ambiente ${Environment}"
+      Enabled: true
+      EnableKeyRotation: true
+      KeySpec: SYMMETRIC_DEFAULT
+      KeyUsage: ENCRYPT_DECRYPT
+      KeyPolicy:
+        Version: 2012-10-17
+        Id: !Sub "AMX-IVR-${Environment}-KMS-SM"
+        Statement:
+          - Sid: Enable IAM User Permissions
+            Effect: Allow
+            Principal:
+              AWS: !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:root
+            Action: 'kms:*'
+            Resource: '*'
+
+      # Los Tags definidos aquí aplican para TODOS los recursos del VPC Stack
+      Tags:
+        - Key: Name
+          Value: !Sub "AMX-IVR-${Environment}-KMS-SM"
+        - Key: Nombre
+          Value: !Sub "AMX-IVR-${Environment}-KMS-SM"
+
+  aliasSM:
+    Type: AWS::KMS::Alias
+    Properties:
+      AliasName: !Sub "alias/AMX-IVR-${Environment}-KMS-SM"
+      TargetKeyId: !GetAtt kmsSM.Arn
+
+  # Servicio EKS
+  kmsEKS:
+    Type: 'AWS::KMS::Key'
+    Properties:
+      Description: !Sub "KMS Para Servicio EKS para Ambiente ${Environment}"
+      Enabled: true
+      EnableKeyRotation: true
+      KeySpec: SYMMETRIC_DEFAULT
+      KeyUsage: ENCRYPT_DECRYPT
+      KeyPolicy:
+        Version: 2012-10-17
+        Id: !Sub "AMX-IVR-${Environment}-KMS-EKS"
+        Statement:
+          - Sid: Enable IAM User Permissions
+            Effect: Allow
+            Principal:
+              AWS: !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:root
+            Action: 'kms:*'
+            Resource: '*'
+          - Sid: Enable EKS permissions
+            Effect: Allow
+            Principal:
+              Service: eks.amazonaws.com
+            Action:
+              - "kms:Encrypt*"
+              - "kms:Decrypt*"
+              - "kms:ReEncrypt*"
+              - "kms:GenerateDataKey*"
+              - "kms:Describe*"
+            Resource: "*"
+
+      # Los Tags definidos aquí aplican para TODOS los recursos del VPC Stack
+      Tags:
+        - Key: Name
+          Value: !Sub "AMX-IVR-${Environment}-KMS-EKS"
+        - Key: Nombre
+          Value: !Sub "AMX-IVR-${Environment}-KMS-EKS"
+
+  aliasEKS:
+    Type: AWS::KMS::Alias
+    Properties:
+      AliasName: !Sub "alias/AMX-IVR-${Environment}-KMS-EKS"
+      TargetKeyId: !GetAtt kmsEKS.Arn
+
+  # Servicio S3
+  kmsS3:
+    Type: 'AWS::KMS::Key'
+    Properties:
+      Description: !Sub "KMS Para Servicio S3 para Ambiente ${Environment}"
+      Enabled: true
+      EnableKeyRotation: true
+      KeySpec: SYMMETRIC_DEFAULT
+      KeyUsage: ENCRYPT_DECRYPT
+      KeyPolicy:
+        Version: 2012-10-17
+        Id: !Sub "AMX-IVR-${Environment}-KMS-S3"
+        Statement:
+          - Sid: Enable IAM User Permissions
+            Effect: Allow
+            Principal:
+              AWS: !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:root
+            Action: 'kms:*'
+            Resource: '*'
+          - Sid: Enable CloudfrontService permissions
+            Effect: Allow
+            Principal:
+              Service: cloudfront.amazonaws.com
+            Action:
+              - "kms:Encrypt*"
+              - "kms:Decrypt*"
+              - "kms:ReEncrypt*"
+              - "kms:GenerateDataKey*"
+              - "kms:Describe*"
+            Resource: "*"
+
+      # Los Tags definidos aquí aplican para TODOS los recursos del VPC Stack
+      Tags:
+        - Key: Name
+          Value: !Sub "AMX-IVR-${Environment}-KMS-S3"
+        - Key: Nombre
+          Value: !Sub "AMX-IVR-${Environment}-KMS-S3"
+
+  aliasS3:
+    Type: AWS::KMS::Alias
+    Properties:
+      AliasName: !Sub "alias/AMX-IVR-${Environment}-KMS-S3"
+      TargetKeyId: !GetAtt kmsS3.Arn
+
+  # Servicio Logs
+  kmsLogs:
+    Type: 'AWS::KMS::Key'
+    Properties:
+      Description: !Sub "KMS Para Servicio Logs (Cloudwatch) para Ambiente ${Environment}"
+      Enabled: true
+      EnableKeyRotation: true
+      KeySpec: SYMMETRIC_DEFAULT
+      KeyUsage: ENCRYPT_DECRYPT
+      KeyPolicy:
+        Version: 2012-10-17
+        Id: !Sub "AMX-IVR-${Environment}-KMS-LGS"
+        Statement:
+          - Sid: Enable IAM User Permissions
+            Effect: Allow
+            Principal:
+              AWS: !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:root
+            Action: 'kms:*'
+            Resource: '*'
+          - Sid: Enable Cloudwatch Permissions
+            Action:
+              - "kms:Encrypt*"
+              - "kms:Decrypt*"
+              - "kms:ReEncrypt*"
+              - "kms:GenerateDataKey*"
+              - "kms:Describe*"
+            Effect: Allow
+            Resource: "*"
+            Principal:
+              Service: !Sub "logs.${AWS::Region}.amazonaws.com"
+
+      # Los Tags definidos aquí aplican para TODOS los recursos del VPC Stack
+      Tags:
+        - Key: Name
+          Value: !Sub "AMX-IVR-${Environment}-KMS-LGS"
+        - Key: Nombre
+          Value: !Sub "AMX-IVR-${Environment}-KMS-LGS"
+
+  aliasLogs:
+    Type: AWS::KMS::Alias
+    Properties:
+      AliasName: !Sub "alias/AMX-IVR-${Environment}-KMS-LGS"
+      TargetKeyId: !GetAtt kmsLogs.Arn
+
+  # Servicio ECR
+  kmsECR:
+    Type: 'AWS::KMS::Key'
+    Properties:
+      Description: !Sub "KMS Para Servicio ECR (Repositorio Imagenes Docker) para Ambiente ${Environment}"
+      Enabled: true
+      EnableKeyRotation: true
+      KeySpec: SYMMETRIC_DEFAULT
+      KeyUsage: ENCRYPT_DECRYPT
+      KeyPolicy:
+        Version: 2012-10-17
+        Id: !Sub "AMX-IVR-${Environment}-KMS-ECR"
+        Statement:
+          - Sid: Enable IAM User Permissions
+            Effect: Allow
+            Principal:
+              AWS: !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:root
+            Action: 'kms:*'
+            Resource: '*'
+
+      # Los Tags definidos aquí aplican para TODOS los recursos del VPC Stack
+      Tags:
+        - Key: Name
+          Value: !Sub "AMX-IVR-${Environment}-KMS-ECR"
+        - Key: Nombre
+          Value: !Sub "AMX-IVR-${Environment}-KMS-ECR"
+
+  aliasECR:
+    Type: AWS::KMS::Alias
+    Properties:
+      AliasName: !Sub "alias/AMX-IVR-${Environment}-KMS-ECR"
+      TargetKeyId: !GetAtt kmsECR.Arn
+
+# Servicio DocumentDB
+  kmsDDB:
+    Type: 'AWS::KMS::Key'
+    Properties:
+      Description: !Sub "KMS Para Servicio DDB para Ambiente ${Environment}"
+      Enabled: true
+      EnableKeyRotation: true
+      KeySpec: SYMMETRIC_DEFAULT
+      KeyUsage: ENCRYPT_DECRYPT
+      KeyPolicy:
+        Version: 2012-10-17
+        Id: !Sub "AMX-IVR-${Environment}-KMS-DDB"
+        Statement:
+          - Sid: Enable IAM User Permissions
+            Effect: Allow
+            Principal:
+              AWS: !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:root
+            Action: 'kms:*'
+            Resource: '*'
+
+      # Los Tags definidos aquí aplican para TODOS los recursos del VPC Stack
+      Tags:
+        - Key: Name
+          Value: !Sub "AMX-IVR-${Environment}-KMS-DDB"
+        - Key: Nombre
+          Value: !Sub "AMX-IVR-${Environment}-KMS-DDB"
+
+  aliasDDB:
+    Type: AWS::KMS::Alias
+    Properties:
+      AliasName: !Sub "alias/AMX-IVR-${Environment}-KMS-DDB"
+      TargetKeyId: !GetAtt kmsDDB.Arn
+#==========================================================================
+Outputs:
+  # General
+  kmsCuenta:
+    Description: Llave KMS para Cuenta en Gral
+    Value: !GetAtt kmsCuenta.Arn
+    Export:
+      Name: ivr-kms-cuenta
+
+  # Servicios
+  kmsECR:
+    Description: Llave KMS para ECR
+    Value: !GetAtt kmsECR.Arn
+    Export:
+      Name: ivr-kms-ecr
+  kmsEKS:
+    Description: Llave KMS para EKS
+    Value: !GetAtt kmsEKS.Arn
+    Export:
+      Name: ivr-kms-eks
+  kmsLogs:
+    Description: Llave KMS para Logs
+    Value: !GetAtt kmsLogs.Arn
+    Export:
+      Name: ivr-kms-logs
+  kmsSM:
+    Description: Llave KMS para SM
+    Value: !GetAtt kmsSM.Arn
+    Export:
+      Name: ivr-kms-secrets
+  kmsS3:
+    Description: Llave KMS para S3
+    Value: !GetAtt kmsS3.Arn
+    Export:
+      Name: ivr-kms-s3
+  kmsDDB:
+    Description: Llave KMS para ddb
+    Value: !GetAtt kmsDDB.Arn
+    Export:
+      Name: ivr-kms-ddb
