@@ -1,0 +1,18 @@
+template:
+  path: S3/AMX-S3-LGS-NTF-CF.yaml
+  type: file
+dependencies:
+  - INFRA/APP/Roster/lambda.yaml
+  - INFRA/APP/Roster/lambda-permission.yaml
+parameters:
+  S3BucketNamePrefix: '{{environment_variable.AppPrefixLower}}'
+  Environment: '{{environment_variable.EnvironmentUpper}}'
+  InstanceName: 'input'
+  ExpirationLogsInDays: '90'
+  NoncurrentLogsDays: '1'
+  LambdaFunctionArn: !stack_output_external AMX-RTS-DES-LMB-CF-Roster::LambdaFunctionArn
+stack_name: {{environment_variable.StackPrefixUpper}}-S3-INP-CF
+hooks:
+  before_delete:
+    - !cmd "BUCKET_NAME=$(aws cloudformation describe-stacks --stack-name {{environment_variable.StackPrefixUpper}}-S3-INP-CF --query 'Stacks[0].Outputs[?OutputKey==`S3BucketName`].OutputValue' --output text) && python3 bin/delete_bucket.py ${BUCKET_NAME} || true"
+    - !cmd "BUCKET_NAME=$(aws cloudformation describe-stacks --stack-name {{environment_variable.StackPrefixUpper}}-S3-INP-CF --query 'Stacks[0].Outputs[?OutputKey==`LoggingBucketName`].OutputValue' --output text) && python3 bin/delete_bucket.py ${BUCKET_NAME} || true"

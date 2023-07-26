@@ -1,0 +1,10 @@
+template:
+  path: LAMBDA/AMX-LMB-PRM-SRC-ARN-CF.yaml
+  type: file
+dependencies:
+  - INFRA/APP/PassInfo/lambda.yaml
+  - INFRA/APP/PassInfo/scheduled-event.yaml
+parameters:
+  LambdaFunctionArn: !stack_output_external AMX-RTS-DES-LMB-CF-PassInfo::LambdaFunctionArn
+  SourceArn: !stack_output_external AMX-RTS-DES-EBR-SCH-CF-PassInfo::EventRuleArn
+stack_name: AMX-RTS-DES-LMB-PRM-CF-PassInfo

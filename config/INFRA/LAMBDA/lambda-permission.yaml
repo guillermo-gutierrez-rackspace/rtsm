@@ -1,0 +1,10 @@
+template:
+  path: LAMBDA/AMX-LMB-PRM-SRC-ARN-CF.yaml
+  type: file
+dependencies:
+  - INFRA/LAMBDA/lambda.yaml
+  - INFRA/EBRIDGE/ScheduledEvent.yaml
+parameters:
+  LambdaFunctionArn: !stack_output_external AMX-RTS-DES-LMB-CF::LambdaFunctionArn
+  EventRuleArn: !stack_output_external AMX-RTS-DES-EBR-SCH-CF::EventRuleArn
+stack_name: AMX-RTS-DES-LMB-PRM-CF

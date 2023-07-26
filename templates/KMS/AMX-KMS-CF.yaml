@@ -1,0 +1,79 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "
+  Cloudformation stack wich crate:
+    - 1 S3 KMS KEY
+  "
+
+# ==========================================================================
+Parameters:
+  AppPrefix:
+    Description: "Specify the application prefix (ie. AMX-PPL-CC"
+    Type: String
+  AppPrefixLower:
+    Description: "Specify the application prefix (ie. AMX-PPL-CC"
+    Type: String
+  Environment:
+    Description: "Specify the type of environment with wich to tag your infraestructure resources that support tags."
+    Type: String
+    AllowedValues:
+      - DES
+      - Q
+      - PD
+    Default: DES
+    ConstraintDescription: Specify either DES, Q or PD.
+
+ # -----------------------------------------------------------------------------
+Mappings:
+  EnvironmentToLower:
+    DES:
+      Environment: des
+    Q:
+      Environment: q
+    PD:
+      Environment: pd
+
+# ==========================================================================
+Resources:
+  # Servicio S3
+  kmsS3:
+    Type: 'AWS::KMS::Key'
+    Properties:
+      Description: !Sub "KMS Para Servicio S3 para Ambiente ${Environment}"
+      Enabled: true
+      EnableKeyRotation: true
+      KeySpec: SYMMETRIC_DEFAULT
+      KeyUsage: ENCRYPT_DECRYPT
+      KeyPolicy:
+        Version: 2012-10-17
+        Id: !Sub "${AppPrefix}-${Environment}-KMS-S3"
+        Statement:
+          - Sid: Enable IAM User Permissions
+            Effect: Allow
+            Principal:
+              AWS: !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:root
+            Action: 'kms:*'
+            Resource: '*'
+
+      # Los Tags definidos aquí aplican para TODOS los recursos del VPC Stack
+      Tags:
+        - Key: Name
+          Value: !Sub "${AppPrefix}-${Environment}-KMS-S3"
+        - Key: Nombre
+          Value: !Sub "${AppPrefix}-${Environment}-KMS-S3"
+
+  aliasS3:
+    Type: AWS::KMS::Alias
+    Properties:
+      AliasName: !Sub "alias/${AppPrefix}-${Environment}-KMS-S3"
+      TargetKeyId: !GetAtt kmsS3.Arn
+
+#==========================================================================
+Outputs:
+  kmsS3:
+    Description: Llave KMS para S3
+    Value: !GetAtt kmsS3.Arn
+    Export:
+      Name: !Sub
+          - "${AppPrefixLower}-${EnvironmentLower}-kms-s3"
+          - EnvironmentLower: !FindInMap [EnvironmentToLower, !Ref Environment, Environment]
+        

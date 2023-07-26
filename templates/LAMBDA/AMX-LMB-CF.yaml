@@ -1,0 +1,103 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: CF Template para crear Lambda.
+
+Parameters:
+
+  AppPrefix:
+    Type: String
+
+  Environment:
+    Type: String
+    Description: Selecciona el entorno del despliegue del STACK
+    AllowedValues:
+      - "PD"
+      - "DES"
+      - "Q"
+    Default: "DES"
+
+  InstanceName:
+    Type: String
+
+Resources:
+
+  LambdaIamRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      RoleName: !Sub "${AppPrefix}-${Environment}-LMB-IAM-${InstanceName}"
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - "sts:AssumeRole"
+      Path: /
+      Policies:
+        - PolicyName: root
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "logs:CreateLogGroup"
+                  - "logs:CreateLogStream"
+                  - "logs:PutLogEvents"
+                Resource: "arn:aws:logs:*:*:*"
+
+  # The AWS::Lambda::Permission resource grants an AWS service or another account
+  # permission to use a function.
+
+#  LambdaPermissions:
+#    Type: AWS::Lambda::Permission
+#    Properties:
+#      FunctionName: !GetAtt LambdaFunction.Arn
+#      Action: lambda:InvokeFunction
+#      Principal: events.amazonaws.com
+#      SourceArn: !GetAtt EventRule.Arn
+
+  LambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Handler: index.handler
+      Role: !GetAtt LambdaIamRole.Arn
+      Runtime: python3.9
+      Timeout: 30
+      Code:
+        ZipFile: |
+          import logging
+          LOGGER = logging.getLogger(__name__)
+          LOGGER.setLevel(logging.INFO)
+          def handler(event, context):
+            LOGGER.info('Event: %s', event)
+
+Outputs:
+  LambdaFunctionArn:
+    Description: "Lambda Function ARN"
+    Value: !GetAtt LambdaFunction.Arn
+
+#  EventRule:
+#    Type: "AWS::Events::Rule"
+#    Properties:
+#      ScheduleExpression: "cron(0 * * * ? *)" 
+#      State: "ENABLED"
+#      Targets:
+#        - Arn: !GetAtt LambdaFunction.Arn
+#          Id: "ScheduledEventRule"
+
+#  ScheduledTrigger:
+#    Type: AWS::Scheduler::Schedule
+#    Properties:
+#      Description: Trigger event on a specific scheduled time
+#      Name: AMX-RTS-DES-SCH-us-east-1-983406763236-PassInfo
+#      FlexibleTimeWindow:
+#        Mode: FLEXIBLE
+#        MaximumWindowInMinutes: 1
+#      ScheduleExpressionTimezone: America/Mexico_City
+#      ScheduleExpression: "cron(* * * * * *)"
+#      State: "ENABLED"
+#      Target:
+#        -
+#          Arn: !GetAtt LambdaFunction.Arn
+#          Input: '{"action": "stop", "TagValues":["20:00"]}'

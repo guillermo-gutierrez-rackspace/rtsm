@@ -1,0 +1,8 @@
+template:
+  path: KMS/AMX-KMS-CF.yaml
+  type: file
+parameters:
+  AppPrefix: 'AMX-RTS'
+  AppPrefixLower: 'amx-rts'
+  Environment: 'DES'
+stack_name: AMX-RTS-DES-KMS-S3-CF

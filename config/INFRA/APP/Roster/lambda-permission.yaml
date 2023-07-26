@@ -1,0 +1,9 @@
+template:
+  path: LAMBDA/AMX-LMB-PRM-SRC-ACC-CF.yaml
+  type: file
+dependencies:
+  - INFRA/APP/Roster/lambda.yaml
+parameters:
+  LambdaFunctionArn: !stack_output_external AMX-RTS-DES-LMB-CF-Roster::LambdaFunctionArn
+  SourceAccount: "{{environment_variable.AWS_ACCOUNT_ID}}"
+stack_name: AMX-RTS-DES-LMB-PRM-CF-Roster

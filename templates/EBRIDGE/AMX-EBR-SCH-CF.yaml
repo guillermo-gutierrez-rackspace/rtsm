@@ -1,0 +1,66 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: CF Template para crear Evento Programado.
+
+Parameters:
+
+  AppPrefix:
+    Type: String
+
+  Environment:
+    Type: String
+    Description: Selecciona el entorno del despliegue del STACK
+    AllowedValues:
+      - "PD"
+      - "DES"
+      - "Q"
+    Default: "DES"
+
+  ScheduleExpression:
+    Type: String
+    Description: "Schedule Expression in the form of: cron(0 * * * ? *) or rate(5 minutes)"
+
+  State:
+    Type: String
+    AllowedValues:
+      - "ENABLED"
+      - "DISABLED"
+    Default: "ENABLED"
+
+  InstanceName:
+    Type: String
+
+  TargetArn:
+    Type: String
+
+Resources:
+
+  EventRule:
+    Type: "AWS::Events::Rule"
+    Properties:
+      Name: !Sub "${AppPrefix}-${Environment}-EB-RULE-${InstanceName}"
+      ScheduleExpression: !Ref ScheduleExpression
+      State: !Ref State
+      Targets:
+        - Arn: !Ref TargetArn
+          Id: !Sub "${AppPrefix}-${Environment}-EB-RULE-Target-${InstanceName}"
+
+Outputs:
+  EventRuleArn:
+    Description: "Event Rule ARN"
+    Value: !GetAtt EventRule.Arn
+
+#  ScheduledTrigger:
+#    Type: AWS::Scheduler::Schedule
+#    Properties:
+#      Description: Trigger event on a specific scheduled time
+#      Name: AMX-RTS-DES-SCH-us-east-1-983406763236-PassInfo
+#      FlexibleTimeWindow:
+#        Mode: FLEXIBLE
+#        MaximumWindowInMinutes: 1
+#      ScheduleExpressionTimezone: America/Mexico_City
+#      ScheduleExpression: "cron(* * * * * *)"
+#      State: "ENABLED"
+#      Target:
+#        -
+#          Arn: !GetAtt LambdaFunction.Arn
+#          Input: '{"action": "stop", "TagValues":["20:00"]}'

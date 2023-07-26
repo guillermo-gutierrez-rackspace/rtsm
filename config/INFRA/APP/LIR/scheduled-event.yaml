@@ -1,0 +1,11 @@
+template:
+  path: EBRIDGE/AMX-EBR-SCH-CF.yaml
+  type: file
+parameters:
+  AppPrefix: 'AMX-RTS'
+  Environment: 'DES'
+  ScheduleExpression: 'cron(*/10 * * * ? *)'
+  State: 'ENABLED'
+  InstanceName: 'Lir'
+  TargetArn: !stack_output_external AMX-RTS-DES-LMB-CF-Lir::LambdaFunctionArn
+stack_name: AMX-RTS-DES-EBR-SCH-CF-Lir

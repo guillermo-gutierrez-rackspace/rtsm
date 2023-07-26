@@ -1,0 +1,6 @@
+INIT_START Runtime Version: python:3.9.v23	Runtime Version ARN: arn:aws:lambda:us-east-1::runtime:bf3c2cf12ad277455c3732549ac6b43321b08f1eb445e825bd941721e0415621
+START RequestId: 959a6710-582d-4a09-880a-612d7f5f8029 Version: $LATEST
+[INFO]	2023-07-23T23:10:37.449Z	959a6710-582d-4a09-880a-612d7f5f8029	Event: {'version': '0', 'id': '0fa68cbf-322b-2a22-b7c2-f4b61271fe61', 'detail-type': 'Scheduled Event', 'source': 'aws.events', 'account': '983406763236', 'time': '2023-07-23T23:10:00Z', 'region': 'us-east-1', 'resources': ['arn:aws:events:us-east-1:983406763236:rule/AMX-RTS-DES-EB-RULE-PassInfo'], 'detail': {}}
+END RequestId: 959a6710-582d-4a09-880a-612d7f5f8029
+REPORT RequestId: 959a6710-582d-4a09-880a-612d7f5f8029	Duration: 1.58 ms	Billed Duration: 2 ms	Memory Size: 128 MB	Max Memory Used: 36 MB	Init Duration: 131.39 ms	
+

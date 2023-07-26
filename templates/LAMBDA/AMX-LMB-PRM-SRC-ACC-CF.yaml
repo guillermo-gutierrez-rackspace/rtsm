@@ -1,0 +1,22 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: CF Template para crear Lambda Permission.
+
+Parameters:
+
+  LambdaFunctionArn:
+    Type: String
+  SourceAccount:
+    Type: String
+
+Resources:
+
+  # The AWS::Lambda::Permission resource grants an AWS service or another account
+  # permission to use a function.
+
+  LambdaPermissions:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref LambdaFunctionArn
+      Action: lambda:InvokeFunction
+      Principal: s3.amazonaws.com
+      SourceAccount: !Ref SourceAccount

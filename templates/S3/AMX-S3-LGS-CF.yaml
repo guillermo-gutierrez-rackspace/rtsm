@@ -25,6 +25,12 @@ Parameters:
       - PD
     ConstraintDescription: Specify either DES, Q or PD.
 
+  InstanceName:
+    Type: String
+    Description: This instance's name in particular. Lowercase
+    AllowedPattern: ^[0-9a-z]+([0-9a-z-]*[0-9a-z])*$
+    ConstraintDescription: "Bucket name prefix can include numbers, lowercase letters, and hyphens (-). It cannot start or end with a hyphen (-)."
+
   ExpirationLogsInDays:
     Description: Indicates the number of days after creation when logs are deleted from Amazon S3.
     Type: String
@@ -44,28 +50,28 @@ Mappings:
       Environment: q
     PD:
       Environment: pd
-  S3Config:
-    us-east-1:
-      BucketPrincipal: '127311923021'
-    us-east-2:
-      BucketPrincipal: '033677994240'
-    us-west-1:
-      BucketPrincipal: '027434742980'
-    us-west-2:
-      BucketPrincipal: '797873946194'
+#  S3Config:
+#    us-east-1:
+#      BucketPrincipal: '127311923021'
+#    us-east-2:
+#      BucketPrincipal: '033677994240'
+#    us-west-1:
+#      BucketPrincipal: '027434742980'
+#    us-west-2:
+#      BucketPrincipal: '797873946194'
 # ------------------------------------------------------------
 Resources:
-  S3BucketCFArtifacts:
+  S3Bucket:
     Type: AWS::S3::Bucket
     Properties:
       BucketName: !Sub
-        - "${S3BucketNamePrefix}-${EnvironmentLower}-${AWS::Region}-${AWS::AccountId}-s3-cf"
+        - "${S3BucketNamePrefix}-${EnvironmentLower}-${AWS::Region}-${AWS::AccountId}-${InstanceName}"
         - EnvironmentLower: !FindInMap [EnvironmentToLower, !Ref Environment, Environment]
       VersioningConfiguration:
         Status: Enabled
       LoggingConfiguration:
         DestinationBucketName: !Ref LoggingBucket
-        LogFilePrefix: !Sub "${S3BucketNamePrefix}-s3-cf-"
+        LogFilePrefix: !Sub "${S3BucketNamePrefix}-s3-${InstanceName}-"
       PublicAccessBlockConfiguration:
         BlockPublicAcls: true
         BlockPublicPolicy: true
@@ -75,31 +81,34 @@ Resources:
         ServerSideEncryptionConfiguration:
           - ServerSideEncryptionByDefault:
               SSEAlgorithm: 'aws:kms'
-              KMSMasterKeyID: !ImportValue ivr-kms-s3
+              KMSMasterKeyID:
+                Fn::ImportValue: !Sub
+                  - "${S3BucketNamePrefix}-${EnvironmentLower}-kms-s3"
+                  - EnvironmentLower: !FindInMap [EnvironmentToLower, !Ref Environment, Environment]
             BucketKeyEnabled: true
 
       Tags:
         - Key: Name
           Value: !Sub
-            - "${S3BucketNamePrefix}-${EnvironmentLower}-s3-cf"
+            - "${S3BucketNamePrefix}-${EnvironmentLower}-s3-${InstanceName}"
             - EnvironmentLower: !FindInMap [EnvironmentToLower, !Ref Environment, Environment]
         - Key: Nombre
           Value: !Sub
-            - "${S3BucketNamePrefix}-${EnvironmentLower}-s3-cf"
+            - "${S3BucketNamePrefix}-${EnvironmentLower}-s3-${InstanceName}"
             - EnvironmentLower: !FindInMap [EnvironmentToLower, !Ref Environment, Environment]
 
-  S3BucketCFArtifactsPolicy:
+  S3BucketPolicy:
     Type: AWS::S3::BucketPolicy
     Properties:
-      Bucket: !Ref S3BucketCFArtifacts
+      Bucket: !Ref S3Bucket
       PolicyDocument:
         Statement:
           - Sid: DenyNonSSLRequests
             Effect: Deny
             Action: s3:*
             Resource:
-              - !Sub arn:${AWS::Partition}:s3:::${S3BucketCFArtifacts}
-              - !Sub arn:${AWS::Partition}:s3:::${S3BucketCFArtifacts}/*
+              - !Sub arn:${AWS::Partition}:s3:::${S3Bucket}
+              - !Sub arn:${AWS::Partition}:s3:::${S3Bucket}/*
             Principal: '*'
             Condition:
               Bool:
@@ -109,14 +118,14 @@ Resources:
     Type: 'AWS::S3::Bucket'
     Properties:
       BucketName: !Sub
-        - "${S3BucketNamePrefix}-${EnvironmentLower}-${AWS::Region}-${AWS::AccountId}-s3-lgs"
+        - "${S3BucketNamePrefix}-${EnvironmentLower}-${AWS::Region}-${AWS::AccountId}-${InstanceName}-lgs"
         - EnvironmentLower: !FindInMap [EnvironmentToLower, !Ref Environment, Environment]
       VersioningConfiguration:
         Status: Enabled
 
       # Por default, los logs se almacenan en este mismo bucket
       LoggingConfiguration:
-        LogFilePrefix: !Sub "${S3BucketNamePrefix}-s3-cf-"
+        LogFilePrefix: !Sub "${S3BucketNamePrefix}-s3-${InstanceName}-"
       PublicAccessBlockConfiguration:
         BlockPublicAcls: true
         BlockPublicPolicy: true
@@ -160,33 +169,39 @@ Resources:
             Condition:
               StringEquals:
                 aws:SourceAccount: !Ref AWS::AccountId
-          - Sid: S3AWSAccountLogsPolicy
-            Effect: Allow
-            Principal:
-              AWS: !Sub
-                - arn:${AWS::Partition}:iam::${ELBAccountNumber}:root
-                - ELBAccountNumber: !FindInMap [S3Config, !Ref 'AWS::Region', BucketPrincipal]
-            Action: s3:PutObject
-            Resource:
-              - !Sub arn:${AWS::Partition}:s3:::${LoggingBucket}/*
+#          - Sid: S3AWSAccountLogsPolicy
+#            Effect: Allow
+#            Principal:
+#              AWS: !Sub
+#                - arn:${AWS::Partition}:iam::${ELBAccountNumber}:root
+#                - ELBAccountNumber: !FindInMap [S3Config, !Ref 'AWS::Region', BucketPrincipal]
+#            Action: s3:PutObject
+#            Resource:
+#              - !Sub arn:${AWS::Partition}:s3:::${LoggingBucket}/*
 
 # ------------------------------------------------------------
 Outputs:
-  S3BucketCFArtifactsName:
-    Description: "Bucket name where the artifacts and cloudformation templates are to be stored"
-    Value: !Ref S3BucketCFArtifacts
-    Export:
-      Name: ivr-s3-cf-name
+  S3BucketName:
+    Description: "Bucket name where the files are to be stored"
+    Value: !Ref S3Bucket
+#    Export:
+#      Name: !Sub
+#        - "${S3BucketNamePrefix}-${EnvironmentLower}-s3-${InstanceName}-name"
+#        - EnvironmentLower: !FindInMap [EnvironmentToLower, !Ref Environment, Environment]
 
   LoggingBucketName:
     Description: "Bucket name where the logs are to be stored"
     Value: !Ref LoggingBucket
-    Export:
-      Name: ivr-s3-logs-name
+#    Export:
+#      Name: !Sub
+#        - "${S3BucketNamePrefix}-${EnvironmentLower}-s3-${InstanceName}-logs-name"
+#        - EnvironmentLower: !FindInMap [EnvironmentToLower, !Ref Environment, Environment]
 
   LoggingBuckeDomaintName:
     Description: "Bucket name where the logs are to be stored"
     Value: !GetAtt LoggingBucket.DomainName
-    Export:
-      Name: ivr-s3-logs-domain
+#    Export:
+#      Name: !Sub
+#        - "${S3BucketNamePrefix}-${EnvironmentLower}-s3-${InstanceName}-logs-domain"
+#        - EnvironmentLower: !FindInMap [EnvironmentToLower, !Ref Environment, Environment]
 

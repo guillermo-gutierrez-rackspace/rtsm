@@ -1,0 +1,8 @@
+template:
+  path: LAMBDA/AMX-LMB-CF.yaml
+  type: file
+parameters:
+  AppPrefix: 'AMX-RTS'
+  Environment: 'DES'
+  InstanceName: 'PassInfo'
+stack_name: AMX-RTS-DES-LMB-CF-PassInfo

@@ -12,6 +12,10 @@ Description: "
 
 # ==========================================================================
 Parameters:
+  AppPrefix:
+    Description: "Application prefix in uppercase (ie. AMX-IVR)"
+    Type: String
+
   Environment:
     Description: "Specify the type of environment with wich to tag your infraestructure resources that support tags."
     Type: String
@@ -45,7 +49,7 @@ Resources:
       KeyUsage: ENCRYPT_DECRYPT
       KeyPolicy:
         Version: 2012-10-17
-        Id: !Sub "AMX-IVR-${Environment}-KMS-CUENTA"
+        Id: !Sub "${AppPrefix}-${Environment}-KMS-CUENTA"
         Statement:
           - Sid: Enable IAM User Permissions
             Effect: Allow
@@ -57,14 +61,14 @@ Resources:
       # Los Tags definidos aquí aplican para TODOS los recursos del VPC Stack
       Tags:
         - Key: Name
-          Value: !Sub "AMX-IVR-${Environment}-KMS-CUENTA"
+          Value: !Sub "${AppPrefix}-${Environment}-KMS-CUENTA"
         - Key: Nombre
-          Value: !Sub "AMX-IVR-${Environment}-KMS-CUENTA"
+          Value: !Sub "${AppPrefix}-${Environment}-KMS-CUENTA"
 
   aliasCuenta:
     Type: AWS::KMS::Alias
     Properties:
-      AliasName: !Sub "alias/AMX-IVR-${Environment}-KMS-CUENTA"
+      AliasName: !Sub "alias/${AppPrefix}-${Environment}-KMS-CUENTA"
       TargetKeyId: !GetAtt kmsCuenta.Arn
 
   ## Servicios
@@ -80,7 +84,7 @@ Resources:
       KeyUsage: ENCRYPT_DECRYPT
       KeyPolicy:
         Version: 2012-10-17
-        Id: !Sub "AMX-IVR-${Environment}-KMS-SM"
+        Id: !Sub "${AppPrefix}-${Environment}-KMS-SM"
         Statement:
           - Sid: Enable IAM User Permissions
             Effect: Allow
@@ -92,14 +96,14 @@ Resources:
       # Los Tags definidos aquí aplican para TODOS los recursos del VPC Stack
       Tags:
         - Key: Name
-          Value: !Sub "AMX-IVR-${Environment}-KMS-SM"
+          Value: !Sub "${AppPrefix}-${Environment}-KMS-SM"
         - Key: Nombre
-          Value: !Sub "AMX-IVR-${Environment}-KMS-SM"
+          Value: !Sub "${AppPrefix}-${Environment}-KMS-SM"
 
   aliasSM:
     Type: AWS::KMS::Alias
     Properties:
-      AliasName: !Sub "alias/AMX-IVR-${Environment}-KMS-SM"
+      AliasName: !Sub "alias/${AppPrefix}-${Environment}-KMS-SM"
       TargetKeyId: !GetAtt kmsSM.Arn
 
   # Servicio EKS
@@ -113,7 +117,7 @@ Resources:
       KeyUsage: ENCRYPT_DECRYPT
       KeyPolicy:
         Version: 2012-10-17
-        Id: !Sub "AMX-IVR-${Environment}-KMS-EKS"
+        Id: !Sub "${AppPrefix}-${Environment}-KMS-EKS"
         Statement:
           - Sid: Enable IAM User Permissions
             Effect: Allow
@@ -136,14 +140,14 @@ Resources:
       # Los Tags definidos aquí aplican para TODOS los recursos del VPC Stack
       Tags:
         - Key: Name
-          Value: !Sub "AMX-IVR-${Environment}-KMS-EKS"
+          Value: !Sub "${AppPrefix}-${Environment}-KMS-EKS"
         - Key: Nombre
-          Value: !Sub "AMX-IVR-${Environment}-KMS-EKS"
+          Value: !Sub "${AppPrefix}-${Environment}-KMS-EKS"
 
   aliasEKS:
     Type: AWS::KMS::Alias
     Properties:
-      AliasName: !Sub "alias/AMX-IVR-${Environment}-KMS-EKS"
+      AliasName: !Sub "alias/${AppPrefix}-${Environment}-KMS-EKS"
       TargetKeyId: !GetAtt kmsEKS.Arn
 
   # Servicio S3
@@ -157,7 +161,7 @@ Resources:
       KeyUsage: ENCRYPT_DECRYPT
       KeyPolicy:
         Version: 2012-10-17
-        Id: !Sub "AMX-IVR-${Environment}-KMS-S3"
+        Id: !Sub "${AppPrefix}-${Environment}-KMS-S3"
         Statement:
           - Sid: Enable IAM User Permissions
             Effect: Allow
@@ -180,14 +184,14 @@ Resources:
       # Los Tags definidos aquí aplican para TODOS los recursos del VPC Stack
       Tags:
         - Key: Name
-          Value: !Sub "AMX-IVR-${Environment}-KMS-S3"
+          Value: !Sub "${AppPrefix}-${Environment}-KMS-S3"
         - Key: Nombre
-          Value: !Sub "AMX-IVR-${Environment}-KMS-S3"
+          Value: !Sub "${AppPrefix}-${Environment}-KMS-S3"
 
   aliasS3:
     Type: AWS::KMS::Alias
     Properties:
-      AliasName: !Sub "alias/AMX-IVR-${Environment}-KMS-S3"
+      AliasName: !Sub "alias/${AppPrefix}-${Environment}-KMS-S3"
       TargetKeyId: !GetAtt kmsS3.Arn
 
   # Servicio Logs
@@ -201,7 +205,7 @@ Resources:
       KeyUsage: ENCRYPT_DECRYPT
       KeyPolicy:
         Version: 2012-10-17
-        Id: !Sub "AMX-IVR-${Environment}-KMS-LGS"
+        Id: !Sub "${AppPrefix}-${Environment}-KMS-LGS"
         Statement:
           - Sid: Enable IAM User Permissions
             Effect: Allow
@@ -224,14 +228,14 @@ Resources:
       # Los Tags definidos aquí aplican para TODOS los recursos del VPC Stack
       Tags:
         - Key: Name
-          Value: !Sub "AMX-IVR-${Environment}-KMS-LGS"
+          Value: !Sub "${AppPrefix}-${Environment}-KMS-LGS"
         - Key: Nombre
-          Value: !Sub "AMX-IVR-${Environment}-KMS-LGS"
+          Value: !Sub "${AppPrefix}-${Environment}-KMS-LGS"
 
   aliasLogs:
     Type: AWS::KMS::Alias
     Properties:
-      AliasName: !Sub "alias/AMX-IVR-${Environment}-KMS-LGS"
+      AliasName: !Sub "alias/${AppPrefix}-${Environment}-KMS-LGS"
       TargetKeyId: !GetAtt kmsLogs.Arn
 
   # Servicio ECR
@@ -245,7 +249,7 @@ Resources:
       KeyUsage: ENCRYPT_DECRYPT
       KeyPolicy:
         Version: 2012-10-17
-        Id: !Sub "AMX-IVR-${Environment}-KMS-ECR"
+        Id: !Sub "${AppPrefix}-${Environment}-KMS-ECR"
         Statement:
           - Sid: Enable IAM User Permissions
             Effect: Allow
@@ -257,14 +261,14 @@ Resources:
       # Los Tags definidos aquí aplican para TODOS los recursos del VPC Stack
       Tags:
         - Key: Name
-          Value: !Sub "AMX-IVR-${Environment}-KMS-ECR"
+          Value: !Sub "${AppPrefix}-${Environment}-KMS-ECR"
         - Key: Nombre
-          Value: !Sub "AMX-IVR-${Environment}-KMS-ECR"
+          Value: !Sub "${AppPrefix}-${Environment}-KMS-ECR"
 
   aliasECR:
     Type: AWS::KMS::Alias
     Properties:
-      AliasName: !Sub "alias/AMX-IVR-${Environment}-KMS-ECR"
+      AliasName: !Sub "alias/${AppPrefix}-${Environment}-KMS-ECR"
       TargetKeyId: !GetAtt kmsECR.Arn
 
 # Servicio DocumentDB
@@ -278,7 +282,7 @@ Resources:
       KeyUsage: ENCRYPT_DECRYPT
       KeyPolicy:
         Version: 2012-10-17
-        Id: !Sub "AMX-IVR-${Environment}-KMS-DDB"
+        Id: !Sub "${AppPrefix}-${Environment}-KMS-DDB"
         Statement:
           - Sid: Enable IAM User Permissions
             Effect: Allow
@@ -290,14 +294,14 @@ Resources:
       # Los Tags definidos aquí aplican para TODOS los recursos del VPC Stack
       Tags:
         - Key: Name
-          Value: !Sub "AMX-IVR-${Environment}-KMS-DDB"
+          Value: !Sub "${AppPrefix}-${Environment}-KMS-DDB"
         - Key: Nombre
-          Value: !Sub "AMX-IVR-${Environment}-KMS-DDB"
+          Value: !Sub "${AppPrefix}-${Environment}-KMS-DDB"
 
   aliasDDB:
     Type: AWS::KMS::Alias
     Properties:
-      AliasName: !Sub "alias/AMX-IVR-${Environment}-KMS-DDB"
+      AliasName: !Sub "alias/${AppPrefix}-${Environment}-KMS-DDB"
       TargetKeyId: !GetAtt kmsDDB.Arn
 #==========================================================================
 Outputs:
@@ -306,36 +310,36 @@ Outputs:
     Description: Llave KMS para Cuenta en Gral
     Value: !GetAtt kmsCuenta.Arn
     Export:
-      Name: ivr-kms-cuenta
+      Name: rts-kms-cuenta
 
   # Servicios
   kmsECR:
     Description: Llave KMS para ECR
     Value: !GetAtt kmsECR.Arn
     Export:
-      Name: ivr-kms-ecr
+      Name: rts-kms-ecr
   kmsEKS:
     Description: Llave KMS para EKS
     Value: !GetAtt kmsEKS.Arn
     Export:
-      Name: ivr-kms-eks
+      Name: rts-kms-eks
   kmsLogs:
     Description: Llave KMS para Logs
     Value: !GetAtt kmsLogs.Arn
     Export:
-      Name: ivr-kms-logs
+      Name: rts-kms-logs
   kmsSM:
     Description: Llave KMS para SM
     Value: !GetAtt kmsSM.Arn
     Export:
-      Name: ivr-kms-secrets
+      Name: rts-kms-secrets
   kmsS3:
     Description: Llave KMS para S3
     Value: !GetAtt kmsS3.Arn
     Export:
-      Name: ivr-kms-s3
+      Name: rts-kms-s3
   kmsDDB:
     Description: Llave KMS para ddb
     Value: !GetAtt kmsDDB.Arn
     Export:
-      Name: ivr-kms-ddb
+      Name: rts-kms-ddb

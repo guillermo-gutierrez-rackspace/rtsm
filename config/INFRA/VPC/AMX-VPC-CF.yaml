@@ -1,0 +1,16 @@
+template:
+  path: AMX-VPC-CF.yaml
+  type: file
+parameters:
+  VPCPrefixName: {{environment_variable.AppPrefixUpper}}
+  VPCCidr: '10.48.14.0/23'
+  AZ1: 'us-east-1a'
+  AZ2: 'us-east-1b'
+  CIDRBlockSubnet1: '10.48.14.0/26'
+  CIDRBlockSubnet2: '10.48.14.64/26'
+  CIDRBlockSubnet3: '10.48.14.128/25'
+  CIDRBlockSubnet4: '10.48.15.0/25'
+  CIDRBlockSubnet5: '10.48.15.128/28'
+  CIDRBlockSubnet6: '10.48.15.144/28'
+  Environment: {{environment_variable.EnvironmentUpper}}
+stack_name: {{environment_variable.StackPrefixUpper}}-VPC-CF

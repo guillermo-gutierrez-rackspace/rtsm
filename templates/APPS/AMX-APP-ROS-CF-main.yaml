@@ -1,0 +1,89 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: CF Template para crear Stacks Anidados.
+
+Parameters:
+  AppPrefix:
+    Type: String
+  AppPrefixLower:
+    Type: String
+
+  Environment:
+    Type: String
+    Description: Selecciona el entorno del despliegue del STACK
+    AllowedValues:
+      - "PD"
+      - "DES"
+      - "Q"
+    Default: "DES"
+
+  InstanceName:
+    Type: String
+
+  TemplateBucketName:
+    Type: String
+
+  ExpirationLogsInDays:
+    Type: String
+
+  NoncurrentLogsDays:
+    Type: String
+
+Resources:
+
+  LambdaStack:
+    Type: 'AWS::CloudFormation::Stack'
+    Properties:
+      TemplateURL: !Sub "https://${TemplateBucketName}.s3.${AWS::Region}.amazonaws.com/AMX-LMB-CF.yaml"
+      Parameters:
+        AppPrefix: !Ref AppPrefix
+        Environment: !Ref Environment
+        InstanceName: !Ref InstanceName
+
+  S3InputBucket:
+    Type: 'AWS::CloudFormation::Stack'
+    Properties:
+      TemplateURL: !Sub "https://${TemplateBucketName}.s3.${AWS::Region}.amazonaws.com/AMX-S3-LGS-NTF-CF.yaml"
+      Parameters:
+        S3BucketNamePrefix: !Ref AppPrefixLower
+        Environment: !Ref Environment
+        InstanceName: !Sub "${InstanceName}-input"
+        ExpirationLogsInDays: !Ref ExpirationLogsInDays
+        NoncurrentLogsDays: !Ref NoncurrentLogsDays
+        LambdaFunctionArn: !GetAtt LambdaStack.Outputs.LambdaFunctionArn
+
+  S3OutputBucket:
+    Type: 'AWS::CloudFormation::Stack'
+    Properties:
+      TemplateURL: !Sub "https://${TemplateBucketName}.s3.${AWS::Region}.amazonaws.com/AMX-S3-LGS-CF.yaml"
+      Parameters:
+        S3BucketNamePrefix: !Ref AppPrefixLower
+        Environment: !Ref Environment
+        InstanceName: !Sub "${InstanceName}-output"
+        ExpirationLogsInDays: !Ref ExpirationLogsInDays
+        NoncurrentLogsDays: !Ref NoncurrentLogsDays
+
+  LambdaPermissionStack:
+    Type: 'AWS::CloudFormation::Stack'
+    Properties:
+      TemplateURL: !Sub "https://${TemplateBucketName}.s3.${AWS::Region}.amazonaws.com/AMX-LMB-PRM-SRC-ACC-CF.yaml"
+      Parameters:
+        LambdaFunctionArn: !GetAtt LambdaStack.Outputs.LambdaFunctionArn
+        SourceAccount: !Sub "${AWS::AccountId}"
+
+Outputs:
+  S3InputBucketName:
+    Description: "S3 Input Bucket Name"
+    Value: !GetAtt S3InputBucket.Outputs.S3BucketName
+
+  S3InputLoggingBucketName:
+    Description: "S3 Input Bucket Name"
+    Value: !GetAtt S3InputBucket.Outputs.LoggingBucketName
+
+  S3OutputBucketName:
+    Description: "S3 Input Bucket Name"
+    Value: !GetAtt S3OutputBucket.Outputs.S3BucketName
+
+  S3OutputLoggingBucketName:
+    Description: "S3 Input Bucket Name"
+    Value: !GetAtt S3OutputBucket.Outputs.LoggingBucketName
+

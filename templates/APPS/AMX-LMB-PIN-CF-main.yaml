@@ -1,0 +1,55 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: CF Template para crear Stacks Anidados.
+
+Parameters:
+  AppPrefix:
+    Type: String
+
+  Environment:
+    Type: String
+    Description: Selecciona el entorno del despliegue del STACK
+    AllowedValues:
+      - "PD"
+      - "DES"
+      - "Q"
+    Default: "DES"
+
+  InstanceName:
+    Type: String
+
+  ScheduleExpression:
+    Type: String
+
+  TemplateBucketName:
+    Type: String
+
+Resources:
+
+  LambdaStack:
+    Type: 'AWS::CloudFormation::Stack'
+    Properties:
+      TemplateURL: !Sub "https://${TemplateBucketName}.s3.${AWS::Region}.amazonaws.com/AMX-LMB-CF.yaml"
+      Parameters:
+        AppPrefix: !Ref AppPrefix
+        Environment: !Ref Environment
+        InstanceName: !Ref InstanceName
+
+  ScheduleEventStack:
+    Type: 'AWS::CloudFormation::Stack'
+    Properties:
+      TemplateURL: !Sub "https://${TemplateBucketName}.s3.${AWS::Region}.amazonaws.com/AMX-EBR-SCH-CF.yaml"
+      Parameters:
+        AppPrefix: !Ref AppPrefix
+        Environment: !Ref Environment
+        InstanceName: !Ref InstanceName
+        ScheduleExpression: !Ref ScheduleExpression
+        State: 'ENABLED'
+        TargetArn: !GetAtt LambdaStack.Outputs.LambdaFunctionArn
+
+  LambdaPermissionStack:
+    Type: 'AWS::CloudFormation::Stack'
+    Properties:
+      TemplateURL: !Sub "https://${TemplateBucketName}.s3.${AWS::Region}.amazonaws.com/AMX-LMB-PRM-SRC-ARN-CF.yaml"
+      Parameters:
+        LambdaFunctionArn: !GetAtt LambdaStack.Outputs.LambdaFunctionArn
+        SourceArn: !GetAtt ScheduleEventStack.Outputs.EventRuleArn

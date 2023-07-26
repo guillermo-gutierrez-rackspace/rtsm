@@ -193,29 +193,29 @@ Resources:
       SubnetId: !Ref Subnet02
       RouteTableId: !Ref PublicRouteTable
 
-  IGW:
-    Type: AWS::EC2::InternetGateway
-    Properties:
-      Tags:
-        - Key: Name
-          Value: !Sub "${VPCPrefixName}-${Environment}-VPC-IGW-01"
-        - Key: Nombre
-          Value: !Sub "${VPCPrefixName}-${Environment}-VPC-IGW-01"
-        - Key: ApplicationRole
-          Value: igw-pub
+#  IGW:
+#    Type: AWS::EC2::InternetGateway
+#    Properties:
+#      Tags:
+#        - Key: Name
+#          Value: !Sub "${VPCPrefixName}-${Environment}-VPC-IGW-01"
+#        - Key: Nombre
+#          Value: !Sub "${VPCPrefixName}-${Environment}-VPC-IGW-01"
+#        - Key: ApplicationRole
+#          Value: igw-pub
 
-  AttachGateway:
-    Type: AWS::EC2::VPCGatewayAttachment
-    Properties:
-      VpcId: !Ref VPC
-      InternetGatewayId: !Ref IGW
+#  AttachGateway:
+#    Type: AWS::EC2::VPCGatewayAttachment
+#    Properties:
+#      VpcId: !Ref VPC
+#      InternetGatewayId: !Ref IGW
 
-  Route:
-    Type: AWS::EC2::Route
-    Properties:
-      RouteTableId: !Ref PublicRouteTable
-      DestinationCidrBlock: 0.0.0.0/0
-      GatewayId: !Ref IGW
+#  Route:
+#    Type: AWS::EC2::Route
+#    Properties:
+#      RouteTableId: !Ref PublicRouteTable
+#      DestinationCidrBlock: 0.0.0.0/0
+#      GatewayId: !Ref IGW
 
   PrivateRouteTable:
     Type: AWS::EC2::RouteTable
@@ -265,69 +265,69 @@ Resources:
       SubnetId: !Ref Subnet06
       RouteTableId: !Ref Private2RouteTable
 
-  ElasticIP:
-    Type: AWS::EC2::EIP
-    Properties:
-      Domain: vpc
-      Tags:
-        - Key: Name
-          Value: !Sub "${VPCPrefixName}-${Environment}-VPC-EIP-01"
-        - Key: Nombre
-          Value: !Sub "${VPCPrefixName}-${Environment}-VPC-EIP-01"
-        - Key: ApplicationRole
-          Value: App
+#  ElasticIP:
+#    Type: AWS::EC2::EIP
+#    Properties:
+#      Domain: vpc
+#      Tags:
+#        - Key: Name
+#          Value: !Sub "${VPCPrefixName}-${Environment}-VPC-EIP-01"
+#        - Key: Nombre
+#          Value: !Sub "${VPCPrefixName}-${Environment}-VPC-EIP-01"
+#        - Key: ApplicationRole
+#          Value: App
 
-  NatGateway:
-    Type: AWS::EC2::NatGateway
-    Properties:
-      AllocationId: !GetAtt ElasticIP.AllocationId
-      SubnetId: !Ref Subnet01
-      Tags:
-        - Key: Name
-          Value: !Sub "${VPCPrefixName}-${Environment}-VPC-NTGW-PUB-01"
-        - Key: Nombre
-          Value: !Sub "${VPCPrefixName}-${Environment}-VPC-NTGW-PUB-01"
-        - Key: ApplicationRole
-          Value: Web
+#  NatGateway:
+#    Type: AWS::EC2::NatGateway
+#    Properties:
+#      AllocationId: !GetAtt ElasticIP.AllocationId
+#      SubnetId: !Ref Subnet01
+#      Tags:
+#        - Key: Name
+#          Value: !Sub "${VPCPrefixName}-${Environment}-VPC-NTGW-PUB-01"
+#        - Key: Nombre
+#          Value: !Sub "${VPCPrefixName}-${Environment}-VPC-NTGW-PUB-01"
+#        - Key: ApplicationRole
+#          Value: Web
 
-  AttachNatGateway1:
-    Type: AWS::EC2::Route
-    Properties:
-      RouteTableId: !Ref PrivateRouteTable
-      DestinationCidrBlock: 0.0.0.0/0
-      NatGatewayId: !Ref NatGateway
+#  AttachNatGateway1:
+#    Type: AWS::EC2::Route
+#    Properties:
+#      RouteTableId: !Ref PrivateRouteTable
+#      DestinationCidrBlock: 0.0.0.0/0
+#      NatGatewayId: !Ref NatGateway
 
-  ElasticIPZoneB:
-    Type: AWS::EC2::EIP
-    Properties:
-      Domain: vpc
-      Tags:
-        - Key: Name
-          Value: !Sub "${VPCPrefixName}-${Environment}-VPC-EIP-02"
-        - Key: Nombre
-          Value: !Sub "${VPCPrefixName}-${Environment}-VPC-EIP-02"
-        - Key: ApplicationRole
-          Value: Web
+#  ElasticIPZoneB:
+#    Type: AWS::EC2::EIP
+#    Properties:
+#      Domain: vpc
+#      Tags:
+#        - Key: Name
+#          Value: !Sub "${VPCPrefixName}-${Environment}-VPC-EIP-02"
+#        - Key: Nombre
+#          Value: !Sub "${VPCPrefixName}-${Environment}-VPC-EIP-02"
+#        - Key: ApplicationRole
+#          Value: Web
 
-  NatGatewayZoneB:
-    Type: AWS::EC2::NatGateway
-    Properties:
-      AllocationId: !GetAtt ElasticIPZoneB.AllocationId
-      SubnetId: !Ref Subnet02
-      Tags:
-        - Key: Name
-          Value: !Sub "${VPCPrefixName}-${Environment}-VPC-NTGW-PUB-02"
-        - Key: Nombre
-          Value: !Sub "${VPCPrefixName}-${Environment}-VPC-NTGW-PUB-02"
-        - Key: ApplicationRole
-          Value: Web
+#  NatGatewayZoneB:
+#    Type: AWS::EC2::NatGateway
+#    Properties:
+#      AllocationId: !GetAtt ElasticIPZoneB.AllocationId
+#      SubnetId: !Ref Subnet02
+#      Tags:
+#        - Key: Name
+#          Value: !Sub "${VPCPrefixName}-${Environment}-VPC-NTGW-PUB-02"
+#        - Key: Nombre
+#          Value: !Sub "${VPCPrefixName}-${Environment}-VPC-NTGW-PUB-02"
+#        - Key: ApplicationRole
+#          Value: Web
 
-  AttachNatGateway2:
-    Type: AWS::EC2::Route
-    Properties:
-      RouteTableId: !Ref Private2RouteTable
-      DestinationCidrBlock: 0.0.0.0/0
-      NatGatewayId: !Ref NatGatewayZoneB
+#  AttachNatGateway2:
+#    Type: AWS::EC2::Route
+#    Properties:
+#      RouteTableId: !Ref Private2RouteTable
+#      DestinationCidrBlock: 0.0.0.0/0
+#      NatGatewayId: !Ref NatGatewayZoneB
 
   PublicNetworkAcl:
     Type: "AWS::EC2::NetworkAcl"
@@ -551,69 +551,69 @@ Outputs:
     Description: The ID of the VPC
     Value: !Ref VPC
     Export:
-      Name: PPL-CC-VPCID
+      Name: !Sub "${VPCPrefixName}-${Environment}-VPCID"
   VPCCidrBlock:
     Description: The CIDR Block of the VPC
     Value: !GetAtt  VPC.CidrBlock
     Export:
-      Name: PPL-CC-VPCCidrBlock
+      Name: !Sub "${VPCPrefixName}-${Environment}-VPCCidrBlock"
   WEBSecurityGroupId:
     Description: The ID of the WEB Security Group
     Value: !Ref WEBSecurityGroup
     Export:
-      Name: PPL-CC-WEBSecurityGroupID
+      Name: !Sub "${VPCPrefixName}-${Environment}-WEBSecurityGroupID"
   APPSecurityGroupId:
     Description: The ID of the APP Security Group
     Value: !Ref APPSecurityGroup
     Export:
-      Name: PPL-CC-APPSecurityGroupID
+      Name: !Sub "${VPCPrefixName}-${Environment}-APPSecurityGroupID"
   DataSecurityGroupId:
     Description: The ID of the Data Security Group
     Value: !Ref DataSecurityGroup
     Export:
-      Name: PPL-CC-DataSecurityGroupID
+      Name: !Sub "${VPCPrefixName}-${Environment}-DataSecurityGroupID"
   Subnet01:
     Description: The ID of the Subnet1
     Value: !Ref Subnet01
     Export:
-      Name: PPL-CC-Subnet01ID
+      Name: !Sub "${VPCPrefixName}-${Environment}-Subnet01ID"
   Subnet02:
     Description: The ID of the Subnet2
     Value: !Ref Subnet02
     Export:
-      Name: PPL-CC-Subnet02ID
+      Name: !Sub "${VPCPrefixName}-${Environment}-Subnet02ID"
   Subnet03:
     Description: The ID of the Subnet3
     Value: !Ref Subnet03
     Export:
-      Name: PPL-CC-Subnet03ID
+      Name: !Sub "${VPCPrefixName}-${Environment}-Subnet03ID"
   Subnet04:
     Description: The ID of the Subnet4
     Value: !Ref Subnet04
     Export:
-      Name: PPL-CC-Subnet04ID
+      Name: !Sub "${VPCPrefixName}-${Environment}-Subnet04ID"
   Subnet05:
     Description: The ID of the Subnet5
     Value: !Ref Subnet05
     Export:
-      Name: PPL-CC-Subnet05ID
+      Name: !Sub "${VPCPrefixName}-${Environment}-Subnet05ID"
   Subnet06:
     Description: The ID of the Subnet6
     Value: !Ref Subnet06
     Export:
-      Name: PPL-CC-Subnet06ID
+      Name: !Sub "${VPCPrefixName}-${Environment}-Subnet06ID"
   PublicRouteTable:
     Description: The ID of the Public Route Table
     Value: !Ref PublicRouteTable
     Export:
-      Name: PPL-CC-PublicRouteTableID
+      Name: !Sub "${VPCPrefixName}-${Environment}-PublicRouteTableID"
   PrivateRouteTable:
     Description: The ID of the Private Route Table
     Value: !Ref PrivateRouteTable
     Export:
-      Name: PPL-CC-PrivateRouteTableID
+      Name: !Sub "${VPCPrefixName}-${Environment}-PrivateRouteTableID"
   Private2RouteTable:
     Description: The ID of the second Private Route Table
     Value: !Ref Private2RouteTable
     Export:
-      Name: PPL-CC-Private2RouteTableID
+      Name: !Sub "${VPCPrefixName}-${Environment}-Private2RouteTableID"

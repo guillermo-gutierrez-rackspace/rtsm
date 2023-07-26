@@ -1,0 +1,69 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "CloudFormation Stack with scheduler"
+
+Parameters:
+
+Resources:
+  TriggerStop20dailyCET:
+    Type: AWS::Scheduler::Schedule
+    Properties:
+      Description: Stop RDS and EC2 with Tag 20:00
+      Name:
+        !Join
+        - '-'
+        - - Ref: Prefix
+          - Ref: Title
+          - "20-00_CET"
+      FlexibleTimeWindow:
+        Mode: FLEXIBLE
+        MaximumWindowInMinutes: 1
+      ScheduleExpressionTimezone: Europe/Zurich
+      ScheduleExpression: "cron(0 20 * * ? *)"
+      State: "ENABLED"
+      Target:
+        Arn:
+          Fn::GetAtt:
+            - LambdaInstSchedDispatcher
+            - Arn
+        #RoleArn: Fn::GetAtt: [ "<which role to use?>", "Arn" ] -> without this key an error is thrown
+        Input:  '{"action": "stop", "TagValues":["20:00"]}'
+
+  SchedulerScheduleRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Description: your-description
+      RoleName: your-role-name
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - scheduler.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Policies:
+        - PolicyName: your-policy-name
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: "lambda:InvokeFunction"
+                Resource:
+                  Fn::GetAtt:
+                    - LambdaInstSchedDispatcher
+                    - Arn
+
+
+#here I add permissions that "TriggerStop20dailyCET" can trigger "LambdaInstSchedDispatcher" function
+PermissionAForEventsToInvokeLambda:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref LambdaInstSchedDispatcher
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn:
+        Fn::GetAtt:
+          - TriggerStop20dailyCET
+          - Arn
+

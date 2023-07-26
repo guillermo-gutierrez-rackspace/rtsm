@@ -1,0 +1,38 @@
+template:
+  path: APPS/AMX-APP-ROS-CF-main.yaml
+  type: file
+dependencies:
+  - INFRA/KMS/AMX-RTS-KMS-S3-CF.yaml
+parameters:
+  AppPrefix: {{environment_variable.AppPrefixUpper}}
+  AppPrefixLower: {{environment_variable.AppPrefixLower}}
+  Environment: {{environment_variable.EnvironmentUpper}}
+  InstanceName: 'roster'
+  TemplateBucketName: {{environment_variable.S3TemplateBucketName}}
+  ExpirationLogsInDays: '90'
+  NoncurrentLogsDays: '1'
+stack_name: {{environment_variable.StackPrefixUpper}}-APP-CF-roster
+hooks:
+  before_create:
+    - !cmd "aws s3api create-bucket --bucket {{environment_variable.S3TemplateBucketName}} --region {{environment_variable.AWS_REGION}}"
+    - !cmd "aws s3 cp templates/LAMBDA/AMX-LMB-CF.yaml s3://{{environment_variable.S3TemplateBucketName}}/AMX-LMB-CF.yaml"
+    - !cmd "aws s3 cp templates/LAMBDA/AMX-LMB-PRM-SRC-ACC-CF.yaml s3://{{environment_variable.S3TemplateBucketName}}/AMX-LMB-PRM-SRC-ACC-CF.yaml"
+    - !cmd "aws s3 cp templates/S3/AMX-S3-LGS-CF.yaml s3://{{environment_variable.S3TemplateBucketName}}/AMX-S3-LGS-CF.yaml"
+    - !cmd "aws s3 cp templates/S3/AMX-S3-LGS-NTF-CF.yaml s3://{{environment_variable.S3TemplateBucketName}}/AMX-S3-LGS-NTF-CF.yaml"
+  after_create:
+    - !cmd "python3 bin/delete_bucket.py {{environment_variable.S3TemplateBucketName}}"
+    - !cmd "aws s3 rb s3://{{environment_variable.S3TemplateBucketName}} --force"
+  before_update:
+    - !cmd "aws s3api create-bucket --bucket {{environment_variable.S3TemplateBucketName}} --region {{environment_variable.AWS_REGION}}"
+    - !cmd "aws s3 cp templates/LAMBDA/AMX-LMB-CF.yaml s3://{{environment_variable.S3TemplateBucketName}}/AMX-LMB-CF.yaml"
+    - !cmd "aws s3 cp templates/LAMBDA/AMX-LMB-PRM-SRC-ACC-CF.yaml s3://{{environment_variable.S3TemplateBucketName}}/AMX-LMB-PRM-SRC-ACC-CF.yaml"
+    - !cmd "aws s3 cp templates/S3/AMX-S3-LGS-CF.yaml s3://{{environment_variable.S3TemplateBucketName}}/AMX-S3-LGS-CF.yaml"
+    - !cmd "aws s3 cp templates/S3/AMX-S3-LGS-NTF-CF.yaml s3://{{environment_variable.S3TemplateBucketName}}/AMX-S3-LGS-NTF-CF.yaml"
+  after_update:
+    - !cmd "python3 bin/delete_bucket.py {{environment_variable.S3TemplateBucketName}}"
+    - !cmd "aws s3 rb s3://{{environment_variable.S3TemplateBucketName}} --force"
+  before_delete:
+    - !cmd "BUCKET_NAME=$(aws cloudformation describe-stacks --stack-name {{environment_variable.StackPrefixUpper}}-APP-CF-roster --query 'Stacks[0].Outputs[?OutputKey==`S3InputBucketName`].OutputValue' --output text) && python3 bin/delete_bucket.py ${BUCKET_NAME} || true"
+    - !cmd "BUCKET_NAME=$(aws cloudformation describe-stacks --stack-name {{environment_variable.StackPrefixUpper}}-APP-CF-roster --query 'Stacks[0].Outputs[?OutputKey==`S3InputLoggingBucketName`].OutputValue' --output text) && python3 bin/delete_bucket.py ${BUCKET_NAME} || true"
+    - !cmd "BUCKET_NAME=$(aws cloudformation describe-stacks --stack-name {{environment_variable.StackPrefixUpper}}-APP-CF-roster --query 'Stacks[0].Outputs[?OutputKey==`S3OutputBucketName`].OutputValue' --output text) && python3 bin/delete_bucket.py ${BUCKET_NAME} || true"
+    - !cmd "BUCKET_NAME=$(aws cloudformation describe-stacks --stack-name {{environment_variable.StackPrefixUpper}}-APP-CF-roster --query 'Stacks[0].Outputs[?OutputKey==`S3OutputLoggingBucketName`].OutputValue' --output text) && python3 bin/delete_bucket.py ${BUCKET_NAME} || true"
